@@ -11,10 +11,22 @@ export default function SignIn() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simple logic: if email contains 'admin', log in as admin
-    const role = email.toLowerCase().includes('admin') ? 'admin' : 'farmer';
+    // Simple logic: determine role based on email content
+    const lowerEmail = email.toLowerCase();
+    let role = 'farmer';
+    
+    if (lowerEmail.includes('admin')) {
+      role = 'admin';
+    } else if (lowerEmail.includes('factory')) {
+      role = 'factory';
+    }
+    
     login(role);
-    navigate(role === 'admin' ? '/admin' : '/farmer');
+    
+    // Navigate based on role
+    if (role === 'admin') navigate('/admin');
+    else if (role === 'factory') navigate('/factory');
+    else navigate('/farmer');
   };
 
   return (
