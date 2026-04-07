@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@theme {
+  --color-slate-grey: #263238;
+  --color-energetic-teal: #00BFA5;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-slate-grey antialiased font-sans;
+  }
+}
