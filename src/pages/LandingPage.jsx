@@ -1,7 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Leaf, ArrowRight, ShieldCheck, Zap, Globe, BarChart3, Users } from 'lucide-react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+
+const Magnetic = ({ children }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const springConfig = { damping: 15, stiffness: 150 };
+  const springX = useSpring(x, springConfig);
+  const springY = useSpring(y, springConfig);
+
+  const handleMouseMove = (e) => {
+    const { clientX, clientY } = e;
+    const { height, width, left, top } = ref.current.getBoundingClientRect();
+    const middleX = clientX - (left + width / 2);
+    const middleY = clientY - (top + height / 2);
+    x.set(middleX * 0.35);
+    y.set(middleY * 0.35);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ x: springX, y: springY }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 const FeatureCard = ({ icon: Icon, title, description, index }) => (
   <motion.div 
@@ -79,6 +114,17 @@ const itemVariants = {
 };
 
 export default function LandingPage() {
+  const { scrollY } = useScroll();
+  
+  // Parallax transforms for the hero image
+  const imageY = useTransform(scrollY, [0, 500], [0, 150]);
+  const imageScale = useTransform(scrollY, [0, 500], [1, 1.1]);
+  
+  // Parallax for floating decorative elements
+  const floatY1 = useTransform(scrollY, [0, 1000], [0, -200]);
+  const floatY2 = useTransform(scrollY, [0, 1000], [0, -400]);
+  const floatRotate = useTransform(scrollY, [0, 1000], [0, 45]);
+
   const { scrollYProgress } = useScroll();
   const scaleProgress = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -87,9 +133,19 @@ export default function LandingPage() {
   });
 
   return (
-    <div className="space-y-32 pb-32">
+    <div className="relative space-y-32 pb-32 overflow-hidden">
+      {/* Floating Decorative Elements (Parallax) */}
+      <motion.div 
+        style={{ y: floatY1, rotate: floatRotate }}
+        className="absolute top-40 -left-20 w-64 h-64 bg-energetic-teal/5 rounded-[3rem] blur-3xl pointer-events-none z-0"
+      />
+      <motion.div 
+        style={{ y: floatY2, rotate: -floatRotate }}
+        className="absolute top-[600px] -right-20 w-96 h-96 bg-slate-grey/5 rounded-[4rem] blur-2xl pointer-events-none z-0"
+      />
+
       {/* Hero Section */}
-      <section className="relative pt-16 lg:pt-24 overflow-hidden">
+      <section className="relative pt-16 lg:pt-24">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <motion.div 
             initial="hidden"
@@ -125,13 +181,17 @@ export default function LandingPage() {
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-5"
             >
-              <Link to="/signup" className="bg-slate-grey text-white px-10 py-5 rounded-3xl font-black flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/30 group relative overflow-hidden">
-                <motion.span whileHover={{ x: 5 }}>JOIN THE ECOSYSTEM</motion.span>
-                <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-              </Link>
-              <Link to="/signin" className="bg-white text-slate-grey border-2 border-slate-200 px-10 py-5 rounded-3xl font-black flex items-center justify-center hover:bg-slate-50 transition-all">
-                EXPLORE PLATFORM
-              </Link>
+              <Magnetic>
+                <Link to="/signup" className="bg-slate-grey text-white px-10 py-5 rounded-3xl font-black flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/30 group relative overflow-hidden">
+                  <motion.span whileHover={{ x: 5 }}>JOIN THE ECOSYSTEM</motion.span>
+                  <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                </Link>
+              </Magnetic>
+              <Magnetic>
+                <Link to="/signin" className="bg-white text-slate-grey border-2 border-slate-200 px-10 py-5 rounded-3xl font-black flex items-center justify-center hover:bg-slate-50 transition-all">
+                  EXPLORE PLATFORM
+                </Link>
+              </Magnetic>
             </motion.div>
             
             <motion.div 
@@ -150,22 +210,16 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.div 
-            initial={{ opacity: 0, x: 100, rotate: 5 }}
-            animate={{ opacity: 1, x: 0, rotate: 0 }}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "circOut" }}
             className="relative"
           >
-             <motion.div 
-                animate={{ rotate: [3, -3, 3] }}
-                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 bg-energetic-teal rounded-[5rem] opacity-5 -m-6"
-             ></motion.div>
-             
              <div className="relative h-[500px] lg:h-[650px] bg-slate-grey rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(38,50,56,0.3)] group">
+                {/* Parallax Image Container */}
                 <motion.div 
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.6 }}
-                    className="absolute inset-0 opacity-60 mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"
+                    style={{ y: imageY, scale: imageScale }}
+                    className="absolute -inset-y-20 inset-x-0 opacity-60 mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"
                 ></motion.div>
                 
                 <div className="relative h-full flex flex-col items-center justify-center p-16 text-center bg-gradient-to-t from-slate-grey via-transparent to-transparent">
@@ -299,10 +353,14 @@ export default function LandingPage() {
             <h2 className="text-5xl lg:text-7xl font-black tracking-tighter mb-12 leading-none uppercase">
                 Building the future <br/>of raw materials.
             </h2>
-            <Link to="/signup" className="bg-slate-grey text-white px-12 py-6 rounded-3xl font-black inline-flex items-center gap-4 hover:bg-slate-800 transition-all shadow-[0_20px_50px_rgba(38,50,56,0.3)] hover:scale-105 active:scale-95 duration-200">
-              <span className="text-lg">START TRADING NOW</span>
-              <ArrowRight size={24} />
-            </Link>
+            <div className="flex justify-center">
+              <Magnetic>
+                <Link to="/signup" className="bg-slate-grey text-white px-12 py-6 rounded-3xl font-black inline-flex items-center gap-4 hover:bg-slate-800 transition-all shadow-[0_20px_50px_rgba(38,50,56,0.3)] hover:scale-105 active:scale-95 duration-200">
+                  <span className="text-lg">START TRADING NOW</span>
+                  <ArrowRight size={24} />
+                </Link>
+              </Magnetic>
+            </div>
             <p className="mt-8 font-bold text-slate-grey/60 uppercase tracking-widest text-xs">Join 10,000+ early adopters worldwide</p>
         </div>
       </motion.section>
